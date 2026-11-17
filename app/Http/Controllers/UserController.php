@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use App\Models\Task;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class UserController extends Controller
+{
+
+    public function allUsers() {
+        $usersWDB = $this->loadUsersWDB();
+
+        // $usersFromDB = DB::table('users')
+        // ->select('id','name', 'address', 'email','nif')
+        // ->get();
+        $usersFromDB = User::select('id','name', 'address', 'email','nif')
+        ->get();
+
+        //debug
+        // dd($usersFromDB);
+
+        return view('users.allusers', compact('usersWDB', 'usersFromDB'));
+    }
+
+
+    public function addUsers() {
+    return view('users.addusers');
+    }
+
+    public function deleteUsers($id){
+        //posso fazer 1 pedaço de código q por ex. atribui as tarefas do user a outro user
+        //antes de apagar o user, apaga as tarefas q lhe correspondem
+        Task::where('user_id',$id)->delete();
+
+        User::where('id', $id)->delete();
+
+        return back();
+    }
+
+
+    public function editUsers(int $id){
+        $userInfo = User::where('id', $id)->select('name','email', 'id', 'address','nif')->first();
+
+        //dd( $userInfo);
+        return view('users.edituser', compact('userInfo'));
+    }
+
+
+    public function storeUser(Request $request){
+        //dd($request->all);
+
+        //validar os dados no servidor
+        $request->validate([
+            'name' => 'required|max:50',
+            'email' => 'required|email|unique:users',
+            'password'=> 'min:8|required'
+        ]);
+
+        //depois de validados, inserir na bd
+        User::insert([
+            'name'=> $request->name,
+            'email'=> $request->email,
+            'password'=> Hash::make($request->password)
+        ]);
+
+        return redirect()->route('users.all')->with('message', 'utilizador adicionado com sucesso!');
+    }
+
+
+    public function updateUser(Request $request){
+        $request->validate([
+            'name' =>'required|max:50'
+        ]);
+
+        User::where('id', $request->id)->update([
+            'name'=> $request->name,
+            'address'=> $request->address,
+            'nif'=> $request->nif,
+        ]);
+
+        return redirect()->route('users.all')->with('message', 'user actualizado com sucesso!');
+    }
+
+    private function loadUsersWDB(){
+        $usersWithoutDB = [
+            ['id'=>1, 'name' => 'Sara', 'email' => 'sara@gmail.com'],
+            ['id'=>2, 'name' => 'Bruno', 'email' => 'Bruno@gmail.com'],
+            ['id'=>3, 'name' => 'Marco', 'email' => 'Marco@gmail.com'],
+            ['id'=>4, 'name' => 'António', 'email' => 'António@gmail.com'],
+        ];
+
+        return $usersWithoutDB;
+    }
+
+}
