@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GiftController;
+use App\Http\Controllers\TaskAPIController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UtilController;
@@ -12,20 +14,26 @@ Route::get('/hello/{message}', function ($message) {
     return '<h1>Hello '.$message.'</h1>';
 });
 
+//rota dashboard
+Route::get('/dashboard', [DashboardController::class, 'home'])
+    ->middleware('auth')
+    ->name('dashboard.home');
+
+
 //rota de homepage
-Route::get('/homepage', [UtilController::class, 'loadHomepage'])->name('home');  //nome q eu dou a este caminho p/ q possa chamar interna/
+Route::get('/home', [UtilController::class, 'loadHomepage'])->name('home');  //nome q eu dou a este caminho p/ q possa chamar interna/
 
 //rota ver users
 Route::get('/users', [UserController::class, 'allUsers'] )->name('users.all');
 
 //rota add users
-Route::get('/users/add', [UserController::class, 'addUsers'] )->name('users.add');
+Route::get('/add-users', [UserController::class, 'addUsers'] )->name('users.add');
 
 //rota de apagar users
 Route::get('/delete-users/{id}', [UserController::class, 'deleteUsers'] )->name('users.delete');
 
 //rota para ver /editar users
-Route::get('/edit-users/{id}',[UserController::class, 'editUsers'] )->name('users.edit');
+Route::get('/edit-users/{id}',[UserController::class, 'editUsers'] )->name('users.edit')->middleware('auth');
 
 //rota de registar users
 Route::post('/store-users', [UserController::class, 'storeUser'])->name('users.store');

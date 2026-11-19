@@ -7,21 +7,29 @@ use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class UserController extends Controller
 {
 
     public function allUsers() {
+
         $usersWDB = $this->loadUsersWDB();
 
-        // $usersFromDB = DB::table('users')
-        // ->select('id','name', 'address', 'email','nif')
-        // ->get();
-        $usersFromDB = User::select('id','name', 'address', 'email','nif')
-        ->get();
+        $searchPar = request()->query('search')?request()->query('search'):null;
+
+        $query = User::select('id','name', 'address', 'email','nif', 'photo');
+
+        if($searchPar){
+            $query->where('name','LIKE' , "%{$searchPar}%")
+            ->orWhere('email','LIKE' , "%{$searchPar}%");
+        }
+
+        $usersFromDB=$query->get();
+        //$usersFromDB = User::all();
 
         //debug
-        // dd($usersFromDB);
+        //dd($usersFromDB);
 
         return view('users.allusers', compact('usersWDB', 'usersFromDB'));
     }
@@ -73,13 +81,22 @@ class UserController extends Controller
 
     public function updateUser(Request $request){
         $request->validate([
-            'name' =>'required|max:50'
+            'name' =>'required|max:50',
+            'photo' =>'image'
         ]);
+
+        if($request->hasFile('photo')){
+            //armazenar no storage e guarda o caminho numa var
+            $photo = Storage::putFile('userPhotos', $request->photo);
+
+        }
+
 
         User::where('id', $request->id)->update([
             'name'=> $request->name,
             'address'=> $request->address,
             'nif'=> $request->nif,
+            'photo' => isset($photo)? $photo : null
         ]);
 
         return redirect()->route('users.all')->with('message', 'user actualizado com sucesso!');
